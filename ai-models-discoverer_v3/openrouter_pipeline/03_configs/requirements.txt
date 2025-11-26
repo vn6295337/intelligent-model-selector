@@ -1,8 +1,0 @@
-# AI Models Discoverer v2 - Root Requirements
-# This project contains multiple pipelines. See individual pipeline directories for specific requirements.
-
-# For OpenRouter Pipeline dependencies, install from:
--r openrouter_pipeline/requirements.txt
-
-# Note: Google pipeline requirements would be added here when needed
-# -r google_pipeline/requirements.txt

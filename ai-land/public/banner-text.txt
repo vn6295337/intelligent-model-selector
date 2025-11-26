@@ -1,1 +1,0 @@
-This Week - OpenRouter free tier: Added MiniMax M2 , NVIDIA Nemotron Nano 12B 2 VL. Removed Hunyuan A13B Instruct, Devstral Small 2505, Gemma 2 9B IT, Kimi Dev 72B, Qwen3 8B.

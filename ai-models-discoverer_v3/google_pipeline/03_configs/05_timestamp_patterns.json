@@ -1,9 +1,0 @@
-{
-  "timestamp_format": "YYYY-MM-DDTHH:MM:SS+00:00",
-  "unix_conversion_template": "datetime.fromtimestamp(int(unix_timestamp)).isoformat() + '+00:00'",
-  "default_fallback_template": "datetime.now().isoformat() + '+00:00'",
-  "report_timestamp_formats": {
-    "filename": "%Y%m%d_%H%M%S",
-    "header": "%Y-%m-%d %H:%M:%S"
-  }
-}

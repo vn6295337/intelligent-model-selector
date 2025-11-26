@@ -1,2 +1,0 @@
-# This file ensures the pipeline-outputs directory is preserved in git
-# The directory will be populated by pipeline scripts during execution
