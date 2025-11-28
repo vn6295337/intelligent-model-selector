@@ -37,7 +37,8 @@ export async function fetchLatestModels() {
 
     // Fetch model provider_slug → AA slug mappings
     const { data: mappings, error: mappingsError } = await supabase
-      .from('ims_10_model_aa_mapping')
+      .schema('ims')
+      .from('10_model_aa_mapping')
       .select('provider_slug, aa_slug, inference_provider');
 
     if (mappingsError) {
