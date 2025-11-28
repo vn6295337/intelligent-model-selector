@@ -35,10 +35,10 @@ export async function fetchLatestModels() {
       throw new Error(`Supabase query error: ${modelsError.message}`);
     }
 
-    // Fetch model name → AA slug mappings
+    // Fetch model provider_slug → AA slug mappings
     const { data: mappings, error: mappingsError } = await supabase
       .from('ims_10_model_aa_mapping')
-      .select('human_readable_name, aa_slug');
+      .select('provider_slug, aa_slug, inference_provider');
 
     if (mappingsError) {
       throw new Error(`Supabase query error: ${mappingsError.message}`);
@@ -64,10 +64,11 @@ export async function fetchLatestModels() {
       throw new Error(`Supabase query error: ${rateLimitsError.message}`);
     }
 
-    // Create lookup maps
+    // Create lookup maps using provider_slug + inference_provider as composite key
     const mappingMap = {};
     (mappings || []).forEach(m => {
-      mappingMap[m.human_readable_name] = m.aa_slug;
+      const key = `${m.inference_provider}:${m.provider_slug}`;
+      mappingMap[key] = m.aa_slug;
     });
 
     const metricsMap = {};
@@ -83,7 +84,8 @@ export async function fetchLatestModels() {
     // 4-table join: working_version → model_aa_mapping → aa_performance_metrics
     //                               → rate_limits
     const modelsWithMetrics = (models || []).map(model => {
-      const aaSlug = mappingMap[model.human_readable_name];
+      const lookupKey = `${model.inference_provider}:${model.provider_slug}`;
+      const aaSlug = mappingMap[lookupKey];
       const aaMetrics = aaSlug ? metricsMap[aaSlug] : null;
       const rateLimitsData = rateLimitsMap[model.human_readable_name] || null;
 
