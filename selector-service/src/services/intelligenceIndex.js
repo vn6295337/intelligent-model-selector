@@ -108,16 +108,18 @@ function parseScores(models) {
     if (!slug) return;
 
     // Get Intelligence Index score (primary metric)
-    let score = model.artificial_analysis_intelligence_index;
+    // API structure: model.evaluations.artificial_analysis_intelligence_index
+    const evaluations = model.evaluations || {};
+    let score = evaluations.artificial_analysis_intelligence_index;
 
     // If Intelligence Index not available, try other metrics
     if (score === null || score === undefined) {
       // Use average of available benchmarks
       const benchmarks = [
-        model.mmlu_pro,
-        model.gpqa,
-        model.artificial_analysis_coding_index,
-        model.artificial_analysis_math_index
+        evaluations.mmlu_pro,
+        evaluations.gpqa,
+        evaluations.artificial_analysis_coding_index,
+        evaluations.artificial_analysis_math_index
       ].filter(v => v !== null && v !== undefined);
 
       if (benchmarks.length > 0) {
