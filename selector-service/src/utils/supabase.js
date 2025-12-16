@@ -18,6 +18,43 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 /**
+ * Normalize provider_slug to match format in ims.10_model_aa_mapping
+ *
+ * This matches the normalization logic in model_aa_mapping_utils.py:
+ * 1. Replace periods, spaces, underscores with hyphens
+ * 2. Remove consecutive hyphens
+ * 3. Strip leading/trailing hyphens
+ * 4. Convert to lowercase
+ * 5. Strip one common suffix (-instruct, -chat, -it, -turbo, -preview, -exp)
+ */
+function normalizeProviderSlug(slug) {
+  if (!slug) return slug;
+
+  // 1. Replace periods, spaces, underscores with hyphens
+  let normalized = slug.replace(/[.\s_]+/g, '-');
+
+  // 2. Remove consecutive hyphens
+  normalized = normalized.replace(/-+/g, '-');
+
+  // 3. Strip leading/trailing hyphens
+  normalized = normalized.replace(/^-+|-+$/g, '');
+
+  // 4. Convert to lowercase
+  normalized = normalized.toLowerCase();
+
+  // 5. Strip ONE common suffix (longest first, in priority order)
+  const suffixes = ['-instruct', '-chat', '-it', '-turbo', '-preview', '-exp'];
+  for (const suffix of suffixes) {
+    if (normalized.endsWith(suffix)) {
+      normalized = normalized.slice(0, -suffix.length);
+      break; // Only strip one suffix
+    }
+  }
+
+  return normalized;
+}
+
+/**
  * Fetch all models from working_version table with AA performance metrics and rate limits
  * Uses 4-table lookup: working_version → model_aa_mapping → aa_performance_metrics
  *                                      → rate_limits
@@ -85,7 +122,9 @@ export async function fetchLatestModels() {
     // 4-table join: working_version → model_aa_mapping → aa_performance_metrics
     //                               → rate_limits
     const modelsWithMetrics = (models || []).map(model => {
-      const lookupKey = `${model.inference_provider}:${model.provider_slug}`;
+      // Normalize provider_slug to match mapping table format
+      const normalizedSlug = normalizeProviderSlug(model.provider_slug);
+      const lookupKey = `${model.inference_provider}:${normalizedSlug}`;
       const aaSlug = mappingMap[lookupKey];
       const aaMetrics = aaSlug ? metricsMap[aaSlug] : null;
       const rateLimitsData = rateLimitsMap[model.human_readable_name] || null;
