@@ -187,6 +187,73 @@ app.get('/best-model', async (req, res) => {
   }
 });
 
+// Get top N models from pre-computed selection scores
+app.get('/best-models', async (req, res) => {
+  try {
+    const { limit = 5, provider } = req.query;
+    const limitNum = parseInt(limit, 10);
+
+    if (limitNum < 1 || limitNum > 50) {
+      return res.status(400).json({
+        error: 'Limit must be between 1 and 50',
+        code: 'INVALID_REQUEST'
+      });
+    }
+
+    // Use 40_model_selection_score for pre-computed rankings
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+
+    let query = supabase
+      .schema('ims')
+      .from('40_model_selection_score')
+      .select('model_name, inference_provider, provider_slug, intelligence_index, selection_score, rpm_limit, overall_headroom, latency_score')
+      .order('selection_score', { ascending: false })
+      .limit(limitNum);
+
+    if (provider) {
+      query = query.eq('inference_provider', provider);
+    }
+
+    const { data: models, error: modelsError } = await query;
+
+    if (modelsError) {
+      throw new Error(`Database query failed: ${modelsError.message}`);
+    }
+
+    if (!models || models.length === 0) {
+      return res.status(404).json({
+        error: 'No models found',
+        code: 'NO_MODELS_AVAILABLE',
+        criteria: { provider: provider || 'all', limit: limitNum }
+      });
+    }
+
+    res.json({
+      models: models.map((m, index) => ({
+        rank: index + 1,
+        provider: m.inference_provider,
+        modelName: m.provider_slug,
+        humanReadableName: m.model_name,
+        selectionScore: m.selection_score,
+        intelligenceIndex: m.intelligence_index,
+        latencyScore: m.latency_score,
+        headroom: m.overall_headroom,
+        rpmLimit: m.rpm_limit
+      })),
+      count: models.length,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Best models query error:', error);
+    res.status(500).json({
+      error: 'Failed to retrieve best models',
+      message: error.message,
+      code: 'QUERY_ERROR'
+    });
+  }
+});
+
 // Select optimal model
 app.post('/select-model', async (req, res) => {
   try {

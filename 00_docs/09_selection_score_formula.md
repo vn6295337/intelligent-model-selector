@@ -37,7 +37,7 @@ score = (
 Each metric headroom = (limit - usage) / limit
 
 **RPM (Requests Per Minute):**
-- limit: requests_per_minute from ims.30_rate_limits table
+- : requests_per_minute from ims.30_rate_limits table
 - usage: count of requests in last 60 seconds
 - window: 60-second rolling window
 
